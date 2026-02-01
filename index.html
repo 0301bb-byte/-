@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 日薪出工紀錄</title>
+<style>
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 15px;
+  background: linear-gradient(135deg,#fdf6e3,#f5e0c3);
+}
+h1 {
+  text-align: center;
+  color: #5a4636;
+  margin-bottom: 20px;
+}
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+  color: #5a4636;
+}
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #d4b996;
+}
+button {
+  background: #d4b996;
+  color: #5a4636;
+  border: none;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  background: #c0a27c;
+}
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  text-align: center;
+  margin-top: 10px;
+}
+.day {
+  padding: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  background: #f8f0e0;
+}
+.day.selected {
+  background: #d4b996;
+  color: white;
+  font-weight: bold;
+}
+.month-name {
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+  color: #5a4636;
+}
+.month-total {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #198754;
+}
+.year-total {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: #b85c38;
+}
+</style>
+</head>
+<body>
+
+<h1>2026 日薪出工紀錄</h1>
+
+<div class="card">
+  <label>設定日薪（只需一次）</label>
+  <input type="number" id="dailyWage" placeholder="例如 2000">
+  <button onclick="saveWage()">儲存日薪</button>
+</div>
+
+<div id="calendarContainer"></div>
+
+<div class="year-total" id="yearTotal">2026 你已經累積賺了 0 元</div>
+
+<script>
+let dailyWage = localStorage.getItem("dailyWage") || "";
+document.getElementById("dailyWage").value = dailyWage;
+
+// 儲存日薪
+function saveWage() {
+  dailyWage = document.getElementById("dailyWage").value;
+  if (!dailyWage || dailyWage <= 0) {
+    alert("請輸入正確日薪");
+    return;
+  }
+  localStorage.setItem("dailyWage", dailyWage);
+  alert("日薪已儲存！");
+}
+
+// 初始化每月勾選日
+let monthData = Array.from({length:12}, ()=> new Set());
+
+// 生成日曆
+function generateCalendar() {
+  const container = document.getElementById("calendarContainer");
+  container.innerHTML = "";
+  const year = 2026;
+
+  for(let month=0; month<12; month++){
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const monthTitle = document.createElement("div");
+    monthTitle.className = "month-name";
+    monthTitle.textContent = `${year} 年 ${month+1} 月`;
+    card.appendChild(monthTitle);
+
+    const grid = document.createElement("div");
+    grid.className = "calendar";
+
+    const firstDay = new Date(year, month,1).getDay();
+    const lastDate = new Date(year, month+1,0).getDate();
+
+    for(let i=0;i<firstDay;i++){
+      const empty = document.createElement("div");
+      grid.appendChild(empty);
+    }
+
+    for(let d=1;d<=lastDate;d++){
+      const dayDiv = document.createElement("div");
+      dayDiv.className = "day";
+      dayDiv.textContent = d;
+      dayDiv.onclick = ()=>{
+        if(dayDiv.classList.contains("selected")){
+          dayDiv.classList.remove("selected");
+          monthData[month].delete(d);
+        } else {
+          dayDiv.classList.add("selected");
+          monthData[month].add(d);
+        }
+        updateMonthTotal(month);
+        updateYearTotal();
+      };
+      grid.appendChild(dayDiv);
+    }
+
+    card.appendChild(grid);
+
+    const monthTotalDiv = document.createElement("div");
+    monthTotalDiv.className = "month-total";
+    monthTotalDiv.id = `monthTotal${month}`;
+    monthTotalDiv.textContent = "本月薪水：0 元";
+    card.appendChild(monthTotalDiv);
+
+    container.appendChild(card);
+  }
+}
+
+// 計算本月薪水
+function updateMonthTotal(month){
+  if(!dailyWage || dailyWage <= 0) return;
+  const total = monthData[month].size * dailyWage;
+  document.getElementById(`monthTotal${month}`).textContent = `本月薪水：${total} 元`;
+}
+
+// 計算全年薪水
+function updateYearTotal(){
+  if(!dailyWage || dailyWage <= 0) return;
+  let yearSum = monthData.reduce((sum,set)=> sum + set.size * dailyWage,0);
+  document.getElementById("yearTotal").textContent = `2026 你已經累積賺了 ${yearSum} 元`;
+}
+
+generateCalendar();
+</script>
+
+</body>
+</html>
